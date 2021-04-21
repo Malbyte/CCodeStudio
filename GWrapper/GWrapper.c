@@ -33,6 +33,12 @@ PFNGLGETSHADERINFOLOGPROC glGetShaderInfoLog;
 PFNGLGETUNIFORMLOCATIONPROC glGetUniformLocation;
 PFNGLUNIFORMMATRIX4FVPROC glUniformMatrix4fv;
 
+
+
+PFNGLGENERATEMIPMAPPROC glGenerateMipmap;
+
+
+PFNGLUNIFORM2FPROC glUniform2f;
 void segfaultHandler(int seg_num){
 	//signal(SIGSEGV, segfaultHandler);
 	longjmp(errhandl, 1);
@@ -54,7 +60,6 @@ int _BaseShadR(int * Shader, const char *shaderSource, int LINE, const char *FUN
 	glCompileShader(*Shader);
 	//NVM, DON'T FOLLOW BELOWS METHOD
 	//use glGetShaderInfoLog to get info on if correctly compiled
-	fragshadererr:
 	while((err = glGetError()) != GL_NO_ERROR){
 		printf("ERR: compilation unsucessful during creation of Fragment Shader: %s : %s : %d\nReason due to ERR: %d\n", cFILE, FUNC, LINE, err);
 	}
@@ -84,6 +89,8 @@ int GWrapperInit(){
 	glUniformMatrix4fv = (PFNGLUNIFORMMATRIX4FVPROC)glXGetProcAddress("glUniformMatrix4fv");
 	
 	glGetShaderInfoLog = (PFNGLGETSHADERINFOLOGPROC)glXGetProcAddress("glGetShaderInfoLog");
+	glGenerateMipmap = (PFNGLGENERATEMIPMAPPROC)glXGetProcAddress("glGenerateMipmap");
+	glUniform2f = (PFNGLUNIFORM2FPROC)glXGetProcAddress("glUniform2f");
 }
 //Basic shader construction
 //Vertex Shader Initialization and compilation
