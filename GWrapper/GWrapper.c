@@ -8,6 +8,11 @@
 #include "/usr/include/GL/glx.h"
 #include "/usr/include/GL/glxext.h"
 
+#define STB_IMAGE_IMPLEMENTATION
+#include "../ExternLib/Bin/stb-master/stb_image.h"
+
+
+
 jmp_buf errhandl;
 PFNGLCREATESHADERPROC glCreateShader;
 PFNGLSHADERSOURCEPROC glShaderSource;
@@ -46,7 +51,7 @@ void segfaultHandler(int seg_num){
 
 int _BaseShadR(int * Shader, const char *shaderSource, int LINE, const char *FUNC, const char *cFILE, int Type){
 	if(setjmp(errhandl)){
-		printf("SEGMENTATION FAULT at fragment creation and compilation: %s : %s : %d :: Ignoring function call\n", cFILE, FUNC, LINE);
+		printf("SEGMENTATION FAULT at shader creation and compilation: %s : %s : %d :: Ignoring function call\n", cFILE, FUNC, LINE);
 		return -1;
 	}
 
@@ -64,6 +69,46 @@ int _BaseShadR(int * Shader, const char *shaderSource, int LINE, const char *FUN
 		printf("ERR: compilation unsucessful during creation of Fragment Shader: %s : %s : %d\nReason due to ERR: %d\n", cFILE, FUNC, LINE, err);
 	}
 }
+int _BaseProgram(unsigned int * shaderProgram, int FragmentShader, int VertexShader, const char *cFILE, const char *FUNC, int LINE){
+	if(setjmp(errhandl)){
+		printf("SEGMENTATION FAULT at program creation and linking: %s : %s : %d :: Ignoring function call\n", cFILE, FUNC, LINE);
+	}
+	*shaderProgram = glCreateProgram();
+	glAttachShader(*shaderProgram, FragmentShader);
+	glAttachShader(*shaderProgram, VertexShader);
+	glLinkProgram(*shaderProgram);
+	glUseProgram(*shaderProgram);
+	return 0;
+}
+int _LOADIMAGE(unsigned int *texture, char name[]){
+	//for now, will use STB for ease of decoding image files, hopefully in the future I'll either be taught how or figure it out
+	glGenTextures(1, texture);
+	
+	glBindTexture(GL_TEXTURE_2D, *texture);
+	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	stbi_set_flip_vertically_on_load(True);
+	int width, height, nrChannels;
+	unsigned char *data = stbi_load(name, &width, &height, &nrChannels, 0);
+	if(!data){
+		printf("failed to load texture");
+		return -1;
+	}
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+	glGenerateMipmap(GL_TEXTURE_2D);
+	stbi_image_free(data);
+}
+
+
+int _DRAW(unsigned int texture, unsigned int VAO, int Vertices, int TYPE){
+	glBindTexture(GL_TEXTURE_2D, texture);
+	glBindVertexArray(VAO);
+	glDrawArrays(TYPE, 0, Vertices);
+}
+
+
 
 int GWrapperInit(){
 	signal(SIGSEGV, segfaultHandler);

@@ -3,12 +3,12 @@
 #include <unistd.h>
 #include "GL/gl.h"
 #include "GLFW/glfw3.h"
-#define STB_IMAGE_IMPLEMENTATION
-#include "ExternLib/Bin/stb-master/stb_image.h"
+//#define STB_IMAGE_IMPLEMENTATION
+//#include "ExternLib/Bin/stb-master/stb_image.h"
 
 #include "/usr/include/GL/glx.h"
 #include "/usr/include/GL/glxext.h"
-
+#include <math.h>
 PFNGLCREATESHADERPROC glCreateShader;
 PFNGLSHADERSOURCEPROC glShaderSource;
 PFNGLCOMPILESHADERPROC glCompileShader;
@@ -67,8 +67,8 @@ const GLchar *fragmentShaderSource = "#version 330 core\n"
 //https://stackoverflow.com/questions/4176247/efficiency-of-branching-in-shaders//read up more and make a decision on whether to have it done every time uniform2f function is called on the cpu or in the shader on the GPU, here it should be relatively safe, though be careful in future decisions as just making a function to do it on the cpu would most likely be safer.
 
 int main(){
-	glfwInit();
 	GWrapperInit();
+	printf("%d\n",glfwInit());
 
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
@@ -79,7 +79,10 @@ int main(){
 	//glfwWindowHint(GLFW_SAMPLES, 4);
 	//^ do not use sampling with pixel art, bad idea
 	GLFWwindow * window = glfwCreateWindow(800, 800, "A", NULL, NULL);
-
+	if(window == NULL){
+		printf("Failed to create window\n");
+		return -1;
+	}
 	glfwMakeContextCurrent(window);
 
 	glViewport(0, 0, 800, 800);
@@ -143,14 +146,10 @@ int main(){
 	}
 
 	unsigned int shaderProgram;
-	shaderProgram = glCreateProgram();
-	glAttachShader(shaderProgram, vertexShader);
-	glAttachShader(shaderProgram, fragmentShader);
-	glLinkProgram(shaderProgram);
-	glUseProgram(shaderProgram);
+	ProgCrtLnk(&shaderProgram, fragmentShader, vertexShader);
 
-	//glDeleteShader(vertexShader);
-	//glDeleteShader(fragmentShader);
+	glDeleteShader(vertexShader);
+	glDeleteShader(fragmentShader);
 
 
 
@@ -181,7 +180,7 @@ int main(){
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	//remember to enable blending with transparent images, as this allows colors with less than 255 alpha to blend with background colors, basic explanation in this reddit question forum: https://www.reddit.com/r/opengl/comments/5ups85/struggling_with_png_transparency_via_stb_image/
 
-	unsigned int texture;
+	/*unsigned int texture;
 	glGenTextures(1, &texture);
 	
 	glBindTexture(GL_TEXTURE_2D, texture);
@@ -200,8 +199,9 @@ int main(){
 	}	
 
 	stbi_image_free(data);
-
-
+	*/
+	unsigned int texture;
+	_LOADIMAGE(&texture, "Atlas.png");
 
 
 
@@ -242,13 +242,15 @@ int main(){
 			//glUniform2f(TexCoordShiftLoc, 0.0f, 0);
 			//transform [3][1] = transform [3][1] - 0.05f;
 		}
+		//only need to do this once I believe
 		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
 	
 		glUniformMatrix4fv(transformloc, 1, GL_FALSE, &transform[0][0]);	
-		glBindTexture(GL_TEXTURE_2D, texture);
-		glBindVertexArray(VAO);
-		glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+		//glBindTexture(GL_TEXTURE_2D, texture);
+		//glBindVertexArray(VAO);
+		//glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+		FanDraw(texture, VAO, 4);
 		glfwSwapBuffers(window);
 	}
 	return 0;
