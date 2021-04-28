@@ -109,7 +109,10 @@ int _DRAW(unsigned int texture, unsigned int VAO, int Vertices, int TYPE){
 }
 
 
-
+ int _CLEARCOLOR(float R, float G, float B, float H){
+ 	glClearColor(R, G, B, H);
+ 	glClear(GL_COLOR_BUFFER_BIT);
+ }
 int GWrapperInit(){
 	signal(SIGSEGV, segfaultHandler);
 	glCreateShader = (PFNGLCREATESHADERPROC)glXGetProcAddress("glCreateShader");

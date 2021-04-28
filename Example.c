@@ -68,8 +68,10 @@ const GLchar *fragmentShaderSource = "#version 330 core\n"
 
 int main(){
 	GWrapperInit();
-	printf("%d\n",glfwInit());
-
+	if(!glfwInit()){
+		printf("GLFW FAILED TO INITIALIZE\n");
+		return 1;
+	}
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 
@@ -180,28 +182,8 @@ int main(){
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	//remember to enable blending with transparent images, as this allows colors with less than 255 alpha to blend with background colors, basic explanation in this reddit question forum: https://www.reddit.com/r/opengl/comments/5ups85/struggling_with_png_transparency_via_stb_image/
 
-	/*unsigned int texture;
-	glGenTextures(1, &texture);
-	
-	glBindTexture(GL_TEXTURE_2D, texture);
-
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
-	int width, height, nrChannels;
-	stbi_set_flip_vertically_on_load(True);
-	unsigned char *data = stbi_load("Atlas.png", &width, &height, &nrChannels, 0);
-	if (data){
-    		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
-    		glGenerateMipmap(GL_TEXTURE_2D);
-	}	
-
-	stbi_image_free(data);
-	*/
 	unsigned int texture;
-	_LOADIMAGE(&texture, "Atlas.png");
+	CLoadImage(&texture, "Atlas.png");
 
 
 
@@ -243,9 +225,7 @@ int main(){
 			//transform [3][1] = transform [3][1] - 0.05f;
 		}
 		//only need to do this once I believe
-		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT);
-	
+		_CLEARCOLOR(0.2f, 0.3f, 0.3f, 1.0f);
 		glUniformMatrix4fv(transformloc, 1, GL_FALSE, &transform[0][0]);	
 		//glBindTexture(GL_TEXTURE_2D, texture);
 		//glBindVertexArray(VAO);
