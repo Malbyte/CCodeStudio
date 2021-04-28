@@ -64,7 +64,6 @@ const GLchar *fragmentShaderSource = "#version 330 core\n"
 "}\n";
 
 
-//TESTING GITIGNORE
 
 //having an if statement here should be okay as it is doing a very lightweight
 //calculation supposedly.
