@@ -62,6 +62,10 @@ const GLchar *fragmentShaderSource = "#version 330 core\n"
 "	}\n"
 "	FragColor = texture(ourTexture, (Coord + TexCoordShift));\n"
 "}\n";
+
+
+//TESTING GITIGNORE
+
 //having an if statement here should be okay as it is doing a very lightweight
 //calculation supposedly.
 //https://stackoverflow.com/questions/4176247/efficiency-of-branching-in-shaders//read up more and make a decision on whether to have it done every time uniform2f function is called on the cpu or in the shader on the GPU, here it should be relatively safe, though be careful in future decisions as just making a function to do it on the cpu would most likely be safer.
