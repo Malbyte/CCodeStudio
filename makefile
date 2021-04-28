@@ -2,14 +2,16 @@
 #Main:BUILD Lib BUILD/GWrapper.o
 #	ar rcs Lib/GWrapper.a BUILD/GWrapper.o
 
-TEST:BUILD main.o GWrapper.o
-	cc `pkg-config --cflags glfw3` -o Executable BUILD/main.o BUILD/GWrapper.o `pkg-config --static --libs glfw3` -lGL
+TEST:BUILD main.o MWrapper.o GWrapper.o
+	cc `pkg-config --cflags glfw3` -o Executable BUILD/main.o BUILD/GWrapper.o BUILD/MWrapper.o `pkg-config --static --libs glfw3` -lGL
 
 main.o:Example.c
 	clear
 	cc `pkg-config --cflags glfw3` -I main -c Example.c -o BUILD/main.o `pkg-config --static --libs glfw3` -lGL
 GWrapper.o:GWrapper/GWrapper.c
 	cc `pkg-config --cflags glfw3` -I GWrapper -c GWrapper/GWrapper.c -o BUILD/GWrapper.o `pkg-config --static --libs glfw3` -lGL
+MWrapper.o:MWrapper/MWrapper.c
+	cc `pkg-config --cflags glfw3` -I MWrapper -c MWrapper/MWrapper.c -o BUILD/MWrapper.o `pkg-config --static --libs glfw3` -lGL
 BUILD:
 	mkdir BUILD
 

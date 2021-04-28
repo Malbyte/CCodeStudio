@@ -1,4 +1,5 @@
 #include "GWrapper/GWrapper.h"
+#include "MWrapper/MWrapper.h"
 #include <stdio.h>
 #include <unistd.h>
 #include "GL/gl.h"
@@ -8,7 +9,7 @@
 
 #include "/usr/include/GL/glx.h"
 #include "/usr/include/GL/glxext.h"
-
+#include <math.h>
 PFNGLCREATESHADERPROC glCreateShader;
 PFNGLSHADERSOURCEPROC glShaderSource;
 PFNGLCOMPILESHADERPROC glCompileShader;
@@ -101,15 +102,16 @@ int main(){
 		-0.5f, 0.5f, 0.0f, 0.0f, 1.0f
 	};
 	//adding very small value to texcoord x position to ensure that it really does get the sampling within range to count a pixel, ensures no vibrating
-	float transform[4][4] = {
+	/*mat4 transform = {
 		{1, 0, 0, 0},
 		{0, 1, 0, 0},
 		{0, 0, 1, 0},
 		{0, -0.5, 0, 1}
 	};
+	*/
 
-
-
+	float *transform = MatInit(4);
+	
 	//ansi c uses row major, therefore this will be stored in row major order instead of column major order (RIP the common practice of column major order in computer graphics)
 	//13, 14, 15 are the translation parts of the matrix	
 	unsigned int VBO;
@@ -158,7 +160,7 @@ int main(){
 
 
 	unsigned int transformloc = glGetUniformLocation(shaderProgram, "transform");
-	glUniformMatrix4fv(transformloc, 1, GL_FALSE, &transform[0][0]);
+	glUniformMatrix4fv(transformloc, 1, GL_FALSE, transform);
 	unsigned int TexCoordShiftLoc = glGetUniformLocation(shaderProgram, "TexCoordShift");
 	glUniform2f(TexCoordShiftLoc, 0, 0);
 	unsigned int CoordEditLoc = glGetUniformLocation(shaderProgram, "CoordEdit");
@@ -213,10 +215,10 @@ int main(){
 	while(!glfwWindowShouldClose(window)){
 		glfwPollEvents();
 		if(glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS){
-			transform [3][0] = transform [3][0] + 0.05f;
+			transform [12] = transform [12] + 0.05f;
 		}
 		if(glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS){
-			transform [3][0] = transform [3][0] - 0.05f;
+			transform [12] = transform [12] - 0.05f;
 			//update texture
 		}
 		if(glfwGetKey(window, GLFW_KEY_W)){
@@ -249,7 +251,7 @@ int main(){
 		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
 	
-		glUniformMatrix4fv(transformloc, 1, GL_FALSE, &transform[0][0]);	
+		glUniformMatrix4fv(transformloc, 1, GL_FALSE, transform);	
 		//glBindTexture(GL_TEXTURE_2D, texture);
 		//glBindVertexArray(VAO);
 		//glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
