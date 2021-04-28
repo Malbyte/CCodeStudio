@@ -102,13 +102,6 @@ int main(){
 		-0.5f, 0.5f, 0.0f, 0.0f, 1.0f
 	};
 	//adding very small value to texcoord x position to ensure that it really does get the sampling within range to count a pixel, ensures no vibrating
-	/*mat4 transform = {
-		{1, 0, 0, 0},
-		{0, 1, 0, 0},
-		{0, 0, 1, 0},
-		{0, -0.5, 0, 1}
-	};
-	*/
 
 	float *transform = MatInit(4);
 	
