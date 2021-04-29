@@ -6,6 +6,35 @@
 
 #define FanDraw(texture, VAO, vertices) _DRAW(texture, VAO, vertices, GL_TRIANGLE_FAN);
 #define CLoadImage(texture, name) _LOADIMAGE(texture, name);
+#include "GL/gl.h"
+PFNGLCREATESHADERPROC glCreateShader;
+PFNGLSHADERSOURCEPROC glShaderSource;
+PFNGLCOMPILESHADERPROC glCompileShader;
+PFNGLGENBUFFERSPROC glGenBuffers;
+PFNGLBINDBUFFERPROC glBindBuffer;
+PFNGLBUFFERDATAPROC glBufferData;
+PFNGLCREATEPROGRAMPROC glCreateProgram;
+
+PFNGLATTACHSHADERPROC glAttachShader;
+PFNGLLINKPROGRAMPROC glLinkProgram;
+PFNGLUSEPROGRAMPROC glUseProgram;
+PFNGLDELETESHADERPROC glDeleteShader;
+PFNGLVERTEXATTRIBPOINTERPROC glVertexAttribPointer;
+
+PFNGLENABLEVERTEXATTRIBARRAYPROC glEnableVertexAttribArray;
+PFNGLGENVERTEXARRAYSPROC glGenVertexArrays;
+PFNGLBINDVERTEXARRAYPROC glBindVertexArray;
+
+PFNGLGETSHADERIVPROC glGetShaderiv;
+PFNGLGETSHADERINFOLOGPROC glGetShaderInfoLog;
+
+PFNGLGETUNIFORMLOCATIONPROC glGetUniformLocation;
+PFNGLUNIFORMMATRIX4FVPROC glUniformMatrix4fv;
+
+PFNGLGENERATEMIPMAPPROC glGenerateMipmap;
+
+PFNGLUNIFORM2FPROC glUniform2f;
+
 int GWrapperInit();
 int _BaseShadR(int * Shader, const char *shaderSource, int LINE, const char *FUNC, const char *_FILE, int Type);
 int _BaseProgram(unsigned int * shaderProgram, int FragmentShader, int VertexShader, const char *cFILE, const char *FUNC, int LINE);

@@ -44,6 +44,7 @@ PFNGLGENERATEMIPMAPPROC glGenerateMipmap;
 
 
 PFNGLUNIFORM2FPROC glUniform2f;
+
 void segfaultHandler(int seg_num){
 	//signal(SIGSEGV, segfaultHandler);
 	longjmp(errhandl, 1);
@@ -55,24 +56,30 @@ int _BaseShadR(int * Shader, const char *shaderSource, int LINE, const char *FUN
 		return -1;
 	}
 
-	signal(SIGSEGV, segfaultHandler);
 	int err = 0;
-	while((err = glGetError()) != GL_NO_ERROR){
-		//clear out opengl errors before starting
-	}
+	int Statuse = 0;
+	char infoLog[512];
+	
+	
 	*Shader = glCreateShader(Type);
 	glShaderSource(*Shader, 1, &shaderSource, NULL);
 	glCompileShader(*Shader);
-	//NVM, DON'T FOLLOW BELOWS METHOD
-	//use glGetShaderInfoLog to get info on if correctly compiled
-	while((err = glGetError()) != GL_NO_ERROR){
-		printf("ERR: compilation unsucessful during creation of Fragment Shader: %s : %s : %d\nReason due to ERR: %d\n", cFILE, FUNC, LINE, err);
+	
+	
+	glGetShaderiv(*Shader, GL_COMPILE_STATUS, &Statuse);
+	
+	if(Statuse == GL_FALSE){
+		glGetShaderInfoLog(*Shader, 512, NULL, infoLog);
+		printf("SHADER SOURCE ERROR: %s : %s : %d :: %s", cFILE, FUNC, LINE, infoLog);
+		glDeleteShader(*Shader);
+		return -1;
 	}
 }
 int _BaseProgram(unsigned int * shaderProgram, int FragmentShader, int VertexShader, const char *cFILE, const char *FUNC, int LINE){
 	if(setjmp(errhandl)){
 		printf("SEGMENTATION FAULT at program creation and linking: %s : %s : %d :: Ignoring function call\n", cFILE, FUNC, LINE);
 	}
+	
 	*shaderProgram = glCreateProgram();
 	glAttachShader(*shaderProgram, FragmentShader);
 	glAttachShader(*shaderProgram, VertexShader);

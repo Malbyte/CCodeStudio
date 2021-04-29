@@ -10,33 +10,7 @@
 #include "/usr/include/GL/glx.h"
 #include "/usr/include/GL/glxext.h"
 #include <math.h>
-PFNGLCREATESHADERPROC glCreateShader;
-PFNGLSHADERSOURCEPROC glShaderSource;
-PFNGLCOMPILESHADERPROC glCompileShader;
-PFNGLGENBUFFERSPROC glGenBuffers;
-PFNGLBINDBUFFERPROC glBindBuffer;
-PFNGLBUFFERDATAPROC glBufferData;
-PFNGLCREATEPROGRAMPROC glCreateProgram;
 
-PFNGLATTACHSHADERPROC glAttachShader;
-PFNGLLINKPROGRAMPROC glLinkProgram;
-PFNGLUSEPROGRAMPROC glUseProgram;
-PFNGLDELETESHADERPROC glDeleteShader;
-PFNGLVERTEXATTRIBPOINTERPROC glVertexAttribPointer;
-
-PFNGLENABLEVERTEXATTRIBARRAYPROC glEnableVertexAttribArray;
-PFNGLGENVERTEXARRAYSPROC glGenVertexArrays;
-PFNGLBINDVERTEXARRAYPROC glBindVertexArray;
-
-PFNGLGETSHADERIVPROC glGetShaderiv;
-PFNGLGETSHADERINFOLOGPROC glGetShaderInfoLog;
-
-PFNGLGETUNIFORMLOCATIONPROC glGetUniformLocation;
-PFNGLUNIFORMMATRIX4FVPROC glUniformMatrix4fv;
-
-PFNGLGENERATEMIPMAPPROC glGenerateMipmap;
-
-PFNGLUNIFORM2FPROC glUniform2f;
 const GLchar *vertexShaderSource = "#version 330 core\n"
 "layout (location = 0) in vec3 aPos;\n"
 "layout (location = 1) in vec2 aTexCoord;\n"
@@ -44,8 +18,8 @@ const GLchar *vertexShaderSource = "#version 330 core\n"
 "uniform mat4 transform;\n"
 "void main()\n"
 "{\n"
-"gl_Position = transform * vec4(aPos.x, aPos.y, aPos.z, 1.0f);\n"
-"TexCoord = aTexCoord;\n"
+"	gl_Position = transform * vec4(aPos.x, aPos.y, aPos.z, 1.0f);\n"
+"	TexCoord = aTexCoord;\n"
 "}\n";
 const GLchar *fragmentShaderSource = "#version 330 core\n"
 "out vec4 FragColor;\n"
@@ -70,10 +44,32 @@ const GLchar *fragmentShaderSource = "#version 330 core\n"
 //calculation supposedly.
 //https://stackoverflow.com/questions/4176247/efficiency-of-branching-in-shaders//read up more and make a decision on whether to have it done every time uniform2f function is called on the cpu or in the shader on the GPU, here it should be relatively safe, though be careful in future decisions as just making a function to do it on the cpu would most likely be safer.
 
+//in future, simplify to local variables with pointers passed, etc, for now global variables will be tolerated until better method found for key_callback, such as perhaps setting up custom one
+struct acceler {
+	int colground;
+	float x;
+	float y;
+	float velocityx;
+	float velocityy;
+} accel;
+#define GRAVITY 0.0009700f;
+int key_callback(GLFWwindow* window, int key, int scancode, int action, int mods){
+	//activated only when a new change in key input has occured
+	if (key == GLFW_KEY_E && action == GLFW_PRESS && accel.colground){
+		//apply vertical acceleration
+		accel.velocityy = 0.1f;
+		accel.colground = 0;
+		//when jumping, start with base velocity from start of jump, similar to throwing an object, has starting velocity, with gravity acting as the only real change in acceleration
+	}
+}
+
 int main(){
 	GWrapperInit();
-	printf("%d\n",glfwInit());
-
+	if(!glfwInit()){
+		printf("FAILED TO INITIALIZE GLFW\n");
+		return -1;
+	}
+	accel.colground = 1;
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 
@@ -84,7 +80,7 @@ int main(){
 	//^ do not use sampling with pixel art, bad idea
 	GLFWwindow * window = glfwCreateWindow(800, 800, "A", NULL, NULL);
 	if(window == NULL){
-		printf("Failed to create window\n");
+		printf("FAILED TO CREATE WINDOW\n");
 		return -1;
 	}
 	glfwMakeContextCurrent(window);
@@ -103,8 +99,8 @@ int main(){
 	};
 	//adding very small value to texcoord x position to ensure that it really does get the sampling within range to count a pixel, ensures no vibrating
 
-	float *transform = MatInit(4);
-	
+	float *transform = MatIdent(4);
+	transform [13] = -0.5f; 
 	//ansi c uses row major, therefore this will be stored in row major order instead of column major order (RIP the common practice of column major order in computer graphics)
 	//13, 14, 15 are the translation parts of the matrix	
 	unsigned int VBO;
@@ -122,19 +118,15 @@ int main(){
 	
 	vertexShadR(&vertexShader, vertexShaderSource);
 
-	/*vertexShader = glCreateShader(GL_VERTEX_SHADER);
-
-	glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
-	glCompileShader(vertexShader);
-	*/
 	int success;
 	char infoLog[512];
+	/*
 	glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
 	if(!success){
 		glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
 		printf("%s", infoLog);
 	}
-
+*/
 	fragmentShadR(&fragmentShader, fragmentShaderSource);
 		
 	glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
@@ -142,7 +134,7 @@ int main(){
 		glGetShaderInfoLog(fragmentShader, 512, NULL, infoLog);
 		printf("%s", infoLog);
 	}
-
+	
 	unsigned int shaderProgram;
 	ProgCrtLnk(&shaderProgram, fragmentShader, vertexShader);
 
@@ -154,12 +146,16 @@ int main(){
 
 	unsigned int transformloc = glGetUniformLocation(shaderProgram, "transform");
 	glUniformMatrix4fv(transformloc, 1, GL_FALSE, transform);
+	
 	unsigned int TexCoordShiftLoc = glGetUniformLocation(shaderProgram, "TexCoordShift");
 	glUniform2f(TexCoordShiftLoc, 0, 0);
+	
 	unsigned int CoordEditLoc = glGetUniformLocation(shaderProgram, "CoordEdit");
+	
 	int xyz = 1;
 	glUniform2f(CoordEditLoc, xyz, 1);
 	unsigned int VAO;
+	
 	glGenVertexArrays(1, &VAO);
 	glBindVertexArray(VAO);
 
@@ -178,34 +174,30 @@ int main(){
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	//remember to enable blending with transparent images, as this allows colors with less than 255 alpha to blend with background colors, basic explanation in this reddit question forum: https://www.reddit.com/r/opengl/comments/5ups85/struggling_with_png_transparency_via_stb_image/
 
-	/*unsigned int texture;
-	glGenTextures(1, &texture);
 	
-	glBindTexture(GL_TEXTURE_2D, texture);
-
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
-	int width, height, nrChannels;
-	stbi_set_flip_vertically_on_load(True);
-	unsigned char *data = stbi_load("Atlas.png", &width, &height, &nrChannels, 0);
-	if (data){
-    		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
-    		glGenerateMipmap(GL_TEXTURE_2D);
-	}	
-
-	stbi_image_free(data);
-	*/
 	unsigned int texture;
 	_LOADIMAGE(&texture, "Atlas.png");
 
 
-
+	float velocityx, velocityy;
+	velocityx = 0;
+	velocityy = 0;
 	int second = 0;
-	float TexAtlas1 = 0.0f;	
+	float TexAtlas1 = 0;
+	glfwSetKeyCallback(window, key_callback);
 	while(!glfwWindowShouldClose(window)){
+		//update acceleration, then velocity, then player position
+		accel.y -= GRAVITY;
+		if(accel.colground){
+			accel.y = 0;
+		}
+		accel.velocityy += accel.y;
+		transform [13] += accel.velocityy;
+		if(transform [13] < -0.5){
+			accel.colground = 1;
+			transform [13] = -0.5f;
+		}
+		printf("%f\n", transform [13]);
 		glfwPollEvents();
 		if(glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS){
 			transform [12] = transform [12] + 0.05f;
