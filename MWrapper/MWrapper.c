@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 #include "MWrapper.h"
 
 float *_MATCREATE(int V, int Mask){
@@ -16,7 +17,12 @@ float *_MATCREATE(int V, int Mask){
 	}
 	return ptr;
 }
-
+float calcDeltaTime(clock_t lastCPUcycle, clock_t curCPUcycle){
+	/*float dif = curCPUcycle - lastCPUcycle;
+	dif = (float)(dif/CLOCKS_PER_SEC);*/
+	float dif = (float)((float)(curCPUcycle / CLOCKS_PER_SEC) - (float)(lastCPUcycle / CLOCKS_PER_SEC));
+	return dif;
+}
 
 /*1, 0, 0, 0
  *0, 1, 0, 0

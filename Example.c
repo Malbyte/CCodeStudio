@@ -2,6 +2,7 @@
 #include "MWrapper/MWrapper.h"
 #include <stdio.h>
 #include <unistd.h>
+#include <time.h>
 #include "GL/gl.h"
 #include "GLFW/glfw3.h"
 //#define STB_IMAGE_IMPLEMENTATION
@@ -45,20 +46,17 @@ const GLchar *fragmentShaderSource = "#version 330 core\n"
 //https://stackoverflow.com/questions/4176247/efficiency-of-branching-in-shaders//read up more and make a decision on whether to have it done every time uniform2f function is called on the cpu or in the shader on the GPU, here it should be relatively safe, though be careful in future decisions as just making a function to do it on the cpu would most likely be safer.
 
 //in future, simplify to local variables with pointers passed, etc, for now global variables will be tolerated until better method found for key_callback, such as perhaps setting up custom one
-struct acceler {
-	int colground;
-	float x;
-	float y;
-	float velocityx;
-	float velocityy;
-} accel;
+
+struct Object ob1;
+
 #define GRAVITY 0.0009700f;
+
 int key_callback(GLFWwindow* window, int key, int scancode, int action, int mods){
 	//activated only when a new change in key input has occured
-	if (key == GLFW_KEY_E && action == GLFW_PRESS && accel.colground){
+	if (key == GLFW_KEY_E && action == GLFW_PRESS && ob1.colground){
 		//apply vertical acceleration
-		accel.velocityy = 0.1f;
-		accel.colground = 0;
+		ob1.velocity.y = 0.1f;
+		ob1.colground = 0;
 		//when jumping, start with base velocity from start of jump, similar to throwing an object, has starting velocity, with gravity acting as the only real change in acceleration
 	}
 }
@@ -69,7 +67,7 @@ int main(){
 		printf("FAILED TO INITIALIZE GLFW\n");
 		return -1;
 	}
-	accel.colground = 1;
+	ob1.colground = 1;
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 
@@ -97,7 +95,7 @@ int main(){
 		0.5f, 0.5f, 0.0f, (1.0/7.0)+0.0001, 1.0f,
 		-0.5f, 0.5f, 0.0f, 0.0f, 1.0f
 	};
-	//adding very small value to texcoord x position to ensure that it really does get the sampling within range to count a pixel, ensures no vibrating
+	//adding very small value to texcoord x position to ensure that it really does get the sampling within range to count a pixel, ensures no vibrating of texture
 
 	float *transform = MatIdent(4);
 	transform [13] = -0.5f; 
@@ -179,35 +177,58 @@ int main(){
 	_LOADIMAGE(&texture, "Atlas.png");
 
 
-	float velocityx, velocityy;
-	velocityx = 0;
-	velocityy = 0;
+
+	ob1.velocity.x = 0;
+	ob1.velocity.y = 0;
 	int second = 0;
 	float TexAtlas1 = 0;
-	glfwSetKeyCallback(window, key_callback);
+	clock_t lastframe = 0, currentframe = 0;
+	int xmov = 0, negxmov = 0;
+	float speed = 1.0f;
+
+	//if button is released, set currentframe to 0
+	//if button is pushed, continue using clock() to update the current frame, then compare the two, then update lastframe with
+	//current frame value
+	//check if key is continued to be held by having a variable that is set at the end of the action of the key, and if it is seen as pressed before then, then it is held, use else statement to set it to zero
 	while(!glfwWindowShouldClose(window)){
 		//update acceleration, then velocity, then player position
-		accel.y -= GRAVITY;
-		if(accel.colground){
-			accel.y = 0;
+		ob1.accel.y -= GRAVITY;
+		if(ob1.colground){
+			ob1.accel.y = 0;
 		}
-		accel.velocityy += accel.y;
-		transform [13] += accel.velocityy;
+		ob1.velocity.y += ob1.accel.y;
+		transform [13] += ob1.velocity.y;
 		if(transform [13] < -0.5){
-			accel.colground = 1;
-			transform [13] = -0.5f;
+			ob1.colground = 1;
+			transform [13] = -speed;
 		}
 		printf("%f\n", transform [13]);
 		glfwPollEvents();
 		if(glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS){
-			transform [12] = transform [12] + 0.05f;
+			currentframe = clock();
+			if(xmov == 1){
+				//currentframe = clock();
+				transform [12] += speed * calcDeltaTime(lastframe, currentframe);
+				printf("movement: %f\n", (speed * (float)(speed * (float)((float)(currentframe - lastframe) / CLOCKS_PER_SEC))));
+				printf("frame time: %f\n", (float)((float)(currentframe - lastframe) / CLOCKS_PER_SEC));
+			}
+			else{
+				//currentframe = clock();
+			}
+			lastframe = currentframe;
+			xmov = 1;
+			printf("TransfrmMat: %f\n", transform[12]);
+		}
+		else{
+			xmov = 0;
 		}
 		if(glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS){
-			transform [12] = transform [12] - 0.05f;
+			transform [12] = transform [12] - speed;
 			//update texture
 		}
 		if(glfwGetKey(window, GLFW_KEY_W)){
 			if(second == 1){
+				//to apply it as twos
 				if(roundf(TexAtlas1 * 1000) == roundf((6.0/7.0)*1000)){
 					TexAtlas1 = (0.0/7.0);
 				}
@@ -219,11 +240,17 @@ int main(){
 			}
 			glUniform2f(TexCoordShiftLoc,TexAtlas1, 0);
 			//transform [3][1] = transform [3][1] + 0.05f;
-			usleep(41000);
+			//usleep(41000);
+			for(int i = 0; i < 40000; i++){
+			
+			}
+			//implement clock readings to get about how many micro seconds have passed
+			//since last frame
 		}
 		else{
 			TexAtlas1 = 0.0f;
 			glUniform2f(TexCoordShiftLoc, TexAtlas1, 0);
+			//set animation movement to zero
 		}
 		if(glfwGetKey(window, GLFW_KEY_S)){
 			xyz = -xyz;
