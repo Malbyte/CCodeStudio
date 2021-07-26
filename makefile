@@ -19,9 +19,23 @@ BUILD:
 
 CLEAN:
 
+LIB: Lib
+	#create Lib files
+	make STATIC
+	make ThirdPartyTools
+	make HEADER
 Lib:
 	mkdir Lib
-
+HEADER: Headers
+	`cp GWrapper/GWrapper.h Lib/Headers`
+	`cp MWrapper/MWrapper.h Lib/Headers`
+Headers:
+	`cd Lib && mkdir Headers`
+ThirdPartyTools:THIRDPARTYTOOLS
+	`cd Lib/THIRDPARTYTOOLS && git clone https://github.com/nothings/stb.git`
+	cd ..
+THIRDPARTYTOOLS:
+	cd Lib && mkdir THIRDPARTYTOOLS
 pushNOUSE:
 	#auto command to let me push current project to current git branch
 	#without needing to input username, password, or dealing with

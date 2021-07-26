@@ -146,6 +146,7 @@ int GWrapperInit(){
 	glGetShaderInfoLog = (PFNGLGETSHADERINFOLOGPROC)glXGetProcAddress("glGetShaderInfoLog");
 	glGenerateMipmap = (PFNGLGENERATEMIPMAPPROC)glXGetProcAddress("glGenerateMipmap");
 	glUniform2f = (PFNGLUNIFORM2FPROC)glXGetProcAddress("glUniform2f");
+	return 0;
 }
 //Basic shader construction
 //Vertex Shader Initialization and compilation
